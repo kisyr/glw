@@ -3,6 +3,7 @@
 #include <iostream>
 #include <glm/gtc/matrix_transform.hpp>
 
+#define __GLW_ENABLE_CHECKING
 #define __GLW_ENABLE_EXCEPTIONS
 #include "../glw.hpp"
 

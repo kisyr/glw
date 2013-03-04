@@ -2,6 +2,7 @@
 #include <GL/glfw.h>
 #include <iostream>
 
+#define __GLW_ENABLE_CHECKING
 #define __GLW_ENABLE_EXCEPTIONS
 #include "../glw.hpp"
 

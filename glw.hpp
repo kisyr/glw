@@ -28,20 +28,25 @@
 #include <cstdarg>
 #include <cstdlib>
 #include <cstring>
+#include <iostream>
 #include <fstream>
 #include <vector>
 #include <map>
 #include <string>
-#include <memory>
 
 #ifndef __GLW_ENABLE_EXCEPTIONS
-#define __GLW_ERROR(Src, Code) std::cerr << "gl.hpp: " << trimCall(Src) << "(" << Code << ")\n";
+#define __GLW_ERROR(Src, Code) std::cerr << "glw.hpp: " << trimCall(Src) << "(" << Code << ")" << " :: " << errString(Code) << std::endl;
 #else
 #define __GLW_ERROR(Src, Code) throw Error(trimCall(Src), Code);
 #endif
 
-#define __GLW_LOG(...) std::cout << "gl.hpp: " << fmtString(__VA_ARGS__) << "\n";
+#define __GLW_LOG(...) std::cout << "glw.hpp: " << fmtString(__VA_ARGS__) << std::endl;
+
+#ifndef __GLW_ENABLE_CHECKING
+#define __GLW_CHECK(Call) (Call)
+#else
 #define __GLW_CHECK(Call) ((Call), checkError(#Call))
+#endif
 
 namespace glw {
 
@@ -54,6 +59,8 @@ typedef GLint int_t;
 typedef GLenum enum_t;
 
 #ifdef glm_glm
+typedef glm::ivec2 ivec2_t;
+typedef glm::ivec3 ivec3_t;
 typedef glm::ivec4 ivec4_t;
 typedef glm::vec2 vec2_t;
 typedef glm::vec3 vec3_t;
@@ -61,17 +68,101 @@ typedef glm::vec4 vec4_t;
 typedef glm::mat3 mat3_t;
 typedef glm::mat4 mat4_t;
 #else
-struct ivec4_t { int_t x,y,z,w; };
-struct vec2_t { float x,y; };
-struct vec3_t { float x,y,z; };
-struct vec4_t { float x,y,z,w; };
+template <typename T>
+struct vec2 
+{ 
+    T x, y; 
+    explicit vec2(T v=0) : x(v), y(v) {}
+    vec2(T x, T y) : x(x), y(y) {}
+};
+
+template <typename T>
+struct vec3 
+{ 
+    T x, y, z; 
+    explicit vec3(T v=0) : x(v), y(v), z(z) {}
+    vec3(T x, T y, T z) : x(x), y(y), z(z) {}
+};
+
+template <typename T>
+struct vec4 
+{ 
+    T x, y, z, w; 
+    explicit vec4(T v=0) : x(v), y(v), z(z), w(w) {}
+    vec4(T x, T y, T z, T w) : x(x), y(y), z(z), w(w) {}
+};
+
+typedef vec2<int_t> ivec2_t;
+typedef vec3<int_t> ivec3_t;
+typedef vec4<int_t> ivec4_t;
+typedef vec2<float> vec2_t;
+typedef vec3<float> vec3_t;
+typedef vec4<float> vec4_t;
+
 struct mat3_t { float m[3][3]; };
 struct mat4_t { float m[4][4]; };
 #endif
 
-namespace detail {
+#ifdef __GLW_ENABLE_CPP11
+#include <memory>
+using std::shared_ptr;
+using std::make_shared;
+#else
+template<class T>
+class shared_ptr
+{
+    template<class U>
+    friend class shared_ptr;
+    
+public:
+    shared_ptr() :p(), c() {}
+    
+    explicit shared_ptr(T* s) :p(s), c(new unsigned(1)) {}
 
-} // namespace detail
+    shared_ptr(const shared_ptr& s) :p(s.p), c(s.c) { if(c) ++*c; }
+
+    shared_ptr& operator=(const shared_ptr& s) 
+    { 
+        if(this!=&s) { 
+            clear(); 
+            p=s.p; 
+            c=s.c; 
+            if(c) ++*c; 
+        } 
+        return *this; 
+    }
+
+    template<class U>
+    shared_ptr(const shared_ptr<U>& s) :p(s.p), c(s.c) { if(c) ++*c; }
+
+    ~shared_ptr() { clear(); }
+
+    void clear() 
+    { 
+        if(c) {
+            if(*c==1) delete p; 
+            if(!--*c) delete c; 
+        } 
+        c=0; 
+        p=0; 
+    }
+
+    T* get() const { return (c)? p: 0; }
+    T* operator->() const { return get(); }
+    T& operator*() const { return *get(); }
+    operator bool() const { return p; }
+
+private:
+    T* p;
+    unsigned* c;
+};
+
+template <class T>
+shared_ptr<T> make_shared()
+{
+    return shared_ptr<T>(new T());
+}
+#endif
 
 /** 
  * @fn trimCall
@@ -79,7 +170,7 @@ namespace detail {
 inline std::string trimCall(const std::string& call)
 {
     size_t n = call.find_first_of('(');
-    if( n > 0 )
+    if(n != std::string::npos)
         return std::string(call.c_str(), n);
     return call;
 }
@@ -88,11 +179,11 @@ inline std::string trimCall(const std::string& call)
  * @fn errorString
  * @brief Translates an OpenGL error code to a string.
  */
-inline std::string errString(int_t code__)
+inline std::string errString(int_t code)
 {
-    switch(code__) {
+    switch(code) {
         case GL_NO_ERROR:
-            return "No Error";
+            return "No error";
         case GL_INVALID_ENUM:
             return "Invalid enum";
         case GL_INVALID_VALUE:
@@ -106,7 +197,7 @@ inline std::string errString(int_t code__)
         case GL_OUT_OF_MEMORY:
             return "Out of memory";
         default:
-            return "Unknown Error";
+            return "Unknown error";
     }
 }
 
@@ -186,7 +277,9 @@ inline void containerType(
         __GLW_IMPL_CONSTANTTYPE(GL_FLOAT_VEC4, GL_FLOAT, 4, 1);
         __GLW_IMPL_CONSTANTTYPE(GL_FLOAT_MAT3, GL_FLOAT, 3, 3);
         __GLW_IMPL_CONSTANTTYPE(GL_FLOAT_MAT4, GL_FLOAT, 4, 4);
+        __GLW_IMPL_CONSTANTTYPE(GL_SAMPLER_1D, GL_INT,   1, 1);
         __GLW_IMPL_CONSTANTTYPE(GL_SAMPLER_2D, GL_INT,   1, 1);
+        __GLW_IMPL_CONSTANTTYPE(GL_SAMPLER_3D, GL_INT,   1, 1);
         default:
             __GLW_LOG("containerType invalid type %i", container_type);
             break;
@@ -200,84 +293,124 @@ inline void containerType(
  */
 inline size_t sizeofType(enum_t type)
 {
-    #define __GLW_IMPL_SIZEOFTYPE(Type, Size) \
-        case Type: return Size;
     switch(type) {
-        __GLW_IMPL_SIZEOFTYPE(GL_FLOAT,          sizeof(float));
-        __GLW_IMPL_SIZEOFTYPE(GL_DOUBLE,         sizeof(double));
-        __GLW_IMPL_SIZEOFTYPE(GL_UNSIGNED_BYTE,  sizeof(ubyte_t));
-        __GLW_IMPL_SIZEOFTYPE(GL_UNSIGNED_SHORT, sizeof(ushort_t));
-        __GLW_IMPL_SIZEOFTYPE(GL_UNSIGNED_INT,   sizeof(uint_t));
-        __GLW_IMPL_SIZEOFTYPE(GL_BYTE,           sizeof(byte_t));
-        __GLW_IMPL_SIZEOFTYPE(GL_SHORT,          sizeof(short_t));
-        __GLW_IMPL_SIZEOFTYPE(GL_INT,            sizeof(int_t));
+        case GL_FLOAT:          return sizeof(float);
+        case GL_DOUBLE:         return sizeof(double);
+        case GL_UNSIGNED_BYTE:  return sizeof(ubyte_t);
+        case GL_UNSIGNED_SHORT: return sizeof(ushort_t);
+        case GL_UNSIGNED_INT:   return sizeof(uint_t);
+        case GL_BYTE:           return sizeof(byte_t);
+        case GL_SHORT:          return sizeof(short_t);
+        case GL_INT:            return sizeof(int_t);
     }
-    #undef __GLW_IMPL_SIZEOFTYPE
 }
 
+namespace detail {
+
+template <enum_t Name>
+struct param_info {};
+
+#define __GLW_DECL_PARAM_INFO(Name, Type, Func, Cast)   \
+    template <> struct param_info<Name> {               \
+        typedef Type param_type;                        \
+        static Type get_param() {                       \
+            Type param;                                 \
+            __GLW_CHECK(Func(Name, (Cast*)&param));     \
+            return param;                               \
+        }                                               \
+    };
+
+__GLW_DECL_PARAM_INFO(GL_VIEWPORT,        ivec4_t, glGetIntegerv, int_t);
+__GLW_DECL_PARAM_INFO(GL_MAJOR_VERSION,   int_t,   glGetIntegerv, int_t);
+__GLW_DECL_PARAM_INFO(GL_MINOR_VERSION,   int_t,   glGetIntegerv, int_t);
+
+template <>
+struct param_info<GL_VERSION>
+{
+    typedef std::string param_type;
+    static std::string get_param()
+    {
+        const ubyte_t* param;
+        __GLW_CHECK(param = glGetString(GL_VERSION));
+        return (const char*)param;
+    }
+};
+
+template <>
+struct param_info<GL_VENDOR>
+{
+    typedef std::string param_type;
+    static std::string get_param()
+    {
+        const ubyte_t* param;
+        __GLW_CHECK(param = glGetString(GL_VENDOR));
+        return (const char*)param;
+    }
+};
+
+} // namespace detail
+
 /**
- * @struct Name
+ * @struct Ref
  */
-struct Name
+struct Ref
 {
-    uint_t name;
-    
-    operator uint_t() const { return name; }
+    uint_t handle;
 };
 
-struct ArrayName : public Name
+struct ArrayRef : public Ref
 {
-    ArrayName() { __GLW_CHECK(glGenVertexArrays(1, &name)); }
-    ~ArrayName() { if(name) glDeleteVertexArrays(1, &name); }
+    ArrayRef() { __GLW_CHECK(glGenVertexArrays(1, &handle)); }
+    ~ArrayRef() { if(handle) glDeleteVertexArrays(1, &handle); }
 };
 
-struct BufferName : public Name
+struct BufferRef : public Ref
 {
-    BufferName() { __GLW_CHECK(glGenBuffers(1, &name)); }
-    ~BufferName() { if(name) glDeleteBuffers(1, &name); }
+    BufferRef() { __GLW_CHECK(glGenBuffers(1, &handle)); }
+    ~BufferRef() { if(handle) glDeleteBuffers(1, &handle); }
 };
 
-struct ProgramName : public Name
+struct ProgramRef : public Ref
 {
-    ProgramName() { __GLW_CHECK(name = glCreateProgram()); }
-    ~ProgramName() { if(name) glDeleteProgram(name); }
+    ProgramRef() { __GLW_CHECK(handle = glCreateProgram()); }
+    ~ProgramRef() { if(handle) glDeleteProgram(handle); }
 };
 
-struct TextureName : public Name
+struct TextureRef : public Ref
 {
-    TextureName() { __GLW_CHECK(glGenTextures(1, &name)); }
-    ~TextureName() { if(name) glDeleteTextures(1, &name); }
+    TextureRef() { __GLW_CHECK(glGenTextures(1, &handle)); }
+    ~TextureRef() { if(handle) glDeleteTextures(1, &handle); }
 };
 
-struct SamplerName : public Name
+struct SamplerRef : public Ref
 {
-    SamplerName() { __GLW_CHECK(glGenSamplers(1, &name)); }
-    ~SamplerName() { if(name) glDeleteSamplers(1, &name); }
+    SamplerRef() { __GLW_CHECK(glGenSamplers(1, &handle)); }
+    ~SamplerRef() { if(handle) glDeleteSamplers(1, &handle); }
 };
 
 /**
  * @class Wrapper
+ * @brief All deriving classes should only contain fields that can
+ *        copied safely by a default copy constructor. The object handle
+ *        is wrapped by a ref-counted smart pointer.
  */
-template <class T>
+template <class R>
 class Wrapper
 {
 protected:
-    std::shared_ptr<T> object_;
+    shared_ptr<R> object_;
     
-    void create() { object_ = std::make_shared<T>(); }
-    operator uint_t&() { return object_->name; }
+    void create() { object_ = make_shared<R>(); }
+    operator uint_t&() { return object_->handle; }
 
 public:
-    Wrapper() : object_(NULL) {}
-
-    uint_t name() const { return object_->name; }
-    bool valid() const { return object_ && object_->name >= 0; }
+    uint_t operator()() const { return object_ ? object_->handle : 0; }
 };
 
 /**
  * @class Buffer
  */
-class Buffer : public Wrapper<BufferName>
+class Buffer : public Wrapper<BufferRef>
 {
 private:
     enum_t usage_;
@@ -301,11 +434,18 @@ public:
         __GLW_CHECK(glBufferData(GL_ARRAY_BUFFER, size__, data__, usage__));
     }
     
-    int_t getInfo(enum_t param__)
+    void write(int_t offset__, size_t size__, const void* data__)
+    {
+        __GLW_CHECK(glBindBuffer(GL_ARRAY_BUFFER, *this));
+        __GLW_CHECK(glBufferSubData(GL_ARRAY_BUFFER, offset__, size__, data__));
+    }
+    
+    template <enum_t Name>
+    int_t getInfo()
     {
         int_t result;
         __GLW_CHECK(glBindBuffer(GL_ARRAY_BUFFER, *this));
-        __GLW_CHECK(glGetBufferParameteriv(GL_ARRAY_BUFFER, param__, &result));
+        __GLW_CHECK(glGetBufferParameteriv(GL_ARRAY_BUFFER, Name, &result));
         return result;
     }
     
@@ -316,7 +456,7 @@ public:
 /** 
  * @class Texture
  */
-class Texture : public Wrapper<TextureName>
+class Texture : public Wrapper<TextureRef>
 {
 protected:
     enum_t target_;
@@ -327,7 +467,7 @@ protected:
 
     Texture() {}
 
-    Texture( 
+    Texture(
         enum_t target__,
         enum_t format__,
         int_t size_x__, 
@@ -394,6 +534,23 @@ public:
             0, 
             format_, 
             type__, 
+            data__));
+    }
+    
+    void write(
+        enum_t type__,
+        int_t offset_x__,
+        int_t size_x__,
+        const void* data__)
+    {
+        __GLW_CHECK(glBindTexture(target_, *this));
+        __GLW_CHECK(glTexSubImage1D(
+            target_,
+            0,
+            offset_x__,
+            size_x__,
+            format_,
+            type__,
             data__));
     }
 };
@@ -499,12 +656,12 @@ public:
 /**
  * @class Sampler
  */
-class Sampler : public Wrapper<SamplerName>
+class Sampler : public Wrapper<SamplerRef>
 {
 public:
     Sampler() {}
     
-    Sampler( 
+    Sampler(
         enum_t min_filter__,
         enum_t mag_filter__,
         enum_t wrap__)
@@ -545,7 +702,7 @@ struct Shader
 /**
  * @class Program
  */
-class Program : public Wrapper<ProgramName>
+class Program : public Wrapper<ProgramRef>
 {
 public:
     struct Binary
@@ -618,7 +775,7 @@ private:
     Uniforms uniforms_;
     Samplers samplers_;
     Binary binary_;
-    std::shared_ptr<ArrayName> array_;
+    shared_ptr<ArrayRef> array_;
     std::string log_;
     
     int_t attach(const Shader& source__)
@@ -666,11 +823,14 @@ private:
     int_t link()
     {
         __GLW_CHECK(glLinkProgram(*this));
-        int_t status;
-        __GLW_CHECK(glGetProgramiv(*this, GL_LINK_STATUS, &status));
+        //int_t status;
+        //__GLW_CHECK(glGetProgramiv(*this, GL_LINK_STATUS, &status));
+        int_t status = getInfo<GL_LINK_STATUS>();
         if(!status) {
-            int_t llen, slen;
-            __GLW_CHECK(glGetProgramiv(*this, GL_INFO_LOG_LENGTH, &llen));
+            //int_t llen, slen;
+            //__GLW_CHECK(glGetProgramiv(*this, GL_INFO_LOG_LENGTH, &llen));
+            int_t slen;
+            int_t llen = getInfo<GL_INFO_LOG_LENGTH>();
             if(llen > 0) {
                 std::string info_log;
                 info_log.resize(llen);
@@ -856,25 +1016,28 @@ private:
 public:
     Program() {}
     
-    Program(const Shaders& sources__)
+    Program(const Shaders& sources__, bool build__ = false)
       : sources_(sources__),
-        array_(std::make_shared<ArrayName>())
+        array_(make_shared<ArrayRef>())
     {
         create();
+        
+        if(build__ && build() != GL_TRUE)
+            __GLW_ERROR("Program::build", -1);
     }
     
     Program(const Binary& binary__)
       : binary_(binary__),
-        array_(std::make_shared<ArrayName>())
+        array_(make_shared<ArrayRef>())
     {
         create();
-        
+        /*
         __GLW_CHECK(glProgramBinary(
             *this, 
             binary_.format, 
             &binary_.data[0],
             binary_.data.size()));
-        
+        */
         initAttributes();
         initUniforms();
     }
@@ -895,7 +1058,8 @@ public:
             return GL_FALSE;
         
         // Get binary.
-        binary_.data.resize(getInfo(GL_PROGRAM_BINARY_LENGTH));
+        /*
+        binary_.data.resize(getInfo<GL_PROGRAM_BINARY_LENGTH>());
         int_t binary_length;
         __GLW_CHECK(glGetProgramBinary(
             *this, 
@@ -903,7 +1067,7 @@ public:
             &binary_length,
             &binary_.format,
             &binary_.data[0]));
-        
+        */
         // Get attributes and uniforms.
         initAttributes();
         initUniforms();
@@ -950,7 +1114,7 @@ public:
         
         attribute.offset = offset__;
         attribute.stride = stride__;
-        attribute.buffer = buffer__.name();
+        attribute.buffer = buffer__();
     }
     
     void setSampler(
@@ -965,23 +1129,24 @@ public:
         sampler.active = true;
         sampler.unit = unit__;
         sampler.target = texture__.target();
-        sampler.texture = texture__.name();
-        sampler.sampler = sampler__.name();
+        sampler.texture = texture__();
+        sampler.sampler = sampler__();
     }
     
     void prepare()
     {
-        __GLW_CHECK(glBindVertexArray(*array_));
+        __GLW_CHECK(glBindVertexArray(array_->handle));
         
         prepareAttributes();
         prepareUniforms();
         prepareSamplers();
     }
     
-    int_t getInfo(enum_t param__)
+    template <enum_t Name>
+    int_t getInfo()
     {
         int_t result;
-        __GLW_CHECK(glGetProgramiv(*this, param__, &result));
+        __GLW_CHECK(glGetProgramiv(*this, Name, &result));
         return result;
     }
     
@@ -1001,14 +1166,16 @@ private:
 
     void prepareDraw(Program& program__)
     {
-        if(last_program_ != program__.name()) {
-            __GLW_CHECK(glUseProgram(program__.name()));
+        if(last_program_ != program__()) {
+            __GLW_CHECK(glUseProgram(program__()));
         }
-        last_program_ = program__.name();
+        last_program_ = program__();
         program__.prepare();
     }
     
 public:
+    Context() : last_program_(0) {}
+
     void clear(enum_t buffers__)
     {
         __GLW_CHECK(glClear(buffers__));
@@ -1035,7 +1202,7 @@ public:
     {
         prepareDraw(program__);
         
-        __GLW_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elements__.name()));
+        __GLW_CHECK(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elements__()));
         __GLW_CHECK(glDrawElements(
             primitive__, 
             count__, 
@@ -1048,8 +1215,16 @@ public:
     {
         __GLW_CHECK(glEnable(param__));
     }
+    
+    template <enum_t Name> typename
+    detail::param_info<Name>::param_type
+    getInfo() const
+    {
+        return detail::param_info<Name>::get_param();
+    }
 };
 
 } // namespace gl
 
 #endif
+
