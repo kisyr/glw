@@ -7,6 +7,7 @@
 
 #include <cstdlib>
 #include <cassert>
+#include <cstdio>
 
 #define TEST_INIT test_init
 

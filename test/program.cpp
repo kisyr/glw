@@ -31,7 +31,7 @@ int main()
 
     error = program.build();
     if(error != GL_NO_ERROR) {
-        std::cerr << "Log: " << program.log() << std::endl;
+        fprintf(stderr, "Log: %s", program.log().c_str());
     }
     TEST_ASSERT(error == GL_NO_ERROR);
 
@@ -45,10 +45,15 @@ int main()
     error = program.setUniform("u_time", 0.f);
     TEST_ASSERT(error == GL_NO_ERROR);
 
+#if 1
+    error = program.execute(GL_TRIANGLES, 0, 3);
+    TEST_ASSERT(error == GL_NO_ERROR);
+#else
     error = program.prepare();
     TEST_ASSERT(error == GL_NO_ERROR);
 
     glDrawArrays(GL_TRIANGLES, 0, 3);
+#endif
 
     return EXIT_SUCCESS;
 }
