@@ -3,8 +3,8 @@
 
 #include <GL/glew.h>
 #include <GL/glfw.h>
-#include "glw.hpp"
 
+#include <iostream>
 #include <cstdlib>
 #include <cassert>
 #include <cstdio>

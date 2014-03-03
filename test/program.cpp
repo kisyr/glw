@@ -1,4 +1,5 @@
 #include "test.hpp"
+#include "glw_program.hpp"
 
 int main()
 {
@@ -39,21 +40,17 @@ int main()
     TEST_ASSERT(program.getInfo<GL_ACTIVE_ATTRIBUTES>() == 1);
     TEST_ASSERT(program.getInfo<GL_ACTIVE_UNIFORMS>() == 1);
 
-    error = program.setAttribute("v_position", buffer);
-    TEST_ASSERT(error == GL_NO_ERROR);
-
     error = program.setUniform("u_time", 0.f);
     TEST_ASSERT(error == GL_NO_ERROR);
 
-#if 1
-    error = program.execute(GL_TRIANGLES, 0, 3);
-    TEST_ASSERT(error == GL_NO_ERROR);
-#else
-    error = program.prepare();
+    error = program.setAttribute("v_position", buffer);
     TEST_ASSERT(error == GL_NO_ERROR);
 
-    glDrawArrays(GL_TRIANGLES, 0, 3);
-#endif
+    error = program.execute(GL_TRIANGLES, 0, 3);
+    TEST_ASSERT(error == GL_NO_ERROR);
+
+    error = program.execute(GL_TRIANGLES, 0, 3);
+    TEST_ASSERT(error == GL_NO_ERROR);
 
     return EXIT_SUCCESS;
 }
