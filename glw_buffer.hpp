@@ -5,23 +5,13 @@
 
 namespace glw {
 
-struct BufferReference : public Reference
-{
-    BufferReference() { __GLW_HANDLE(glGenBuffers(1, &handle)) {} }
-    ~BufferReference() { if(handle) glDeleteBuffers(1, &handle); }
-};
-
-class Buffer : public Wrapper<BufferReference>
+class Buffer : public Wrapper
 {
 private:
     GLenum usage_;
     size_t size_;
 
 public:
-    Buffer()
-      : usage_(0),
-        size_(0) {}
-    
     Buffer(
         const GLenum usage__,
         const size_t size__,
@@ -30,8 +20,7 @@ public:
       : usage_(usage__),
         size_(size__)
     {
-        create();
-        
+        __GLW_HANDLE(glGenBuffers(1, &handle_)) {}        
         __GLW_HANDLE(glBindBuffer(GL_ARRAY_BUFFER, *this)) {
             if(error__) *error__ = handle_error(__GLW_LAST_ERROR, "glBindBuffer");
             return;
@@ -40,6 +29,11 @@ public:
             if(error__) *error__ = handle_error(__GLW_LAST_ERROR, "glBufferData");
             return;
         }
+    }
+
+    ~Buffer()
+    {
+        if(handle_) glDeleteBuffers(1, &handle_);
     }
 
     GLuint write(const GLint offset__, const size_t size__, const void* data__)

@@ -22,13 +22,7 @@ private:
     std::string log_;
 };
 
-struct ProgramReference : public Reference
-{
-    ProgramReference() { __GLW_HANDLE(handle = glCreateProgram()) {} }
-    ~ProgramReference() { if(handle) glDeleteProgram(handle); }
-};
-
-class Program : public Wrapper<ProgramReference>
+class Program : public Wrapper
 {
 public:
     struct Attribute
@@ -167,12 +161,15 @@ private:
     }
 
 public:
-    Program() {}
-    
     Program(const Shaders& sources__, GLuint* error = NULL)
       : sources_(sources__)
     {
-        create();
+        __GLW_HANDLE(handle_ = glCreateProgram()) {}
+    }
+
+    ~Program()
+    {
+        if(handle_) glDeleteProgram(handle_);
     }
     
     GLuint build()

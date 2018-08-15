@@ -5,19 +5,13 @@
 
 namespace glw {
 
-struct TextureReference : public Reference
-{
-    TextureReference() { __GLW_HANDLE(glGenTextures(1, &handle)) {} }
-    ~TextureReference() { if(handle) glDeleteTextures(1, &handle); }
-};
-
 struct ImageFormat
 {
     GLenum type;
     GLenum order;
 };
 
-class Texture : public Wrapper<TextureReference>
+class Texture : public Wrapper
 {
 protected:
     GLenum target_;
@@ -25,8 +19,6 @@ protected:
     GLint size_x_;
     GLint size_y_;
     GLint size_z_;
-
-    Texture() {}
 
     Texture(
         const GLenum target__,
@@ -41,8 +33,8 @@ protected:
         size_y_(size_y__),
         size_z_(size_z__)
     {
-        create();
     
+        __GLW_HANDLE(glGenTextures(1, &handle_)) {}
         __GLW_HANDLE(glBindTexture(target_, *this)) {
             if(error) *error = handle_error(__GLW_LAST_ERROR, "glBindTexture");
             return;
@@ -64,6 +56,11 @@ protected:
             return;
         }
 #endif
+    }
+
+    ~Texture()
+    {
+        if(handle_) glDeleteTextures(1, &handle_);
     }
     
 public:
@@ -96,8 +93,6 @@ public:
 class Texture2D : public Texture
 {
 public:
-    Texture2D() {}
-    
     Texture2D(
         const GLint internal_format__,
         const ImageFormat& format__,

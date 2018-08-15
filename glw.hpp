@@ -180,23 +180,21 @@ static inline size_t sizeof_type(const GLenum type)
     }
 }
 
-struct Reference
-{
-    GLuint handle;
-};
-
-template <class R>
 class Wrapper
 {
+private:
+    Wrapper(const Wrapper&);
+
 protected:
-    shared_ptr<R> object_;
-    
-    void create() { object_ = make_shared<R>(); }
-    operator GLuint&() { return object_->handle; }
+    GLuint handle_;
+
+    Wrapper() : handle_(0) {}
+    virtual ~Wrapper() {}
+    operator GLuint&() { return handle_; }
 
 public:
-    void destroy() { object_.reset(); }
-    GLuint operator()() const { return object_ ? object_->handle : 0; }
+    GLuint id() const { return handle_; }
+    GLuint operator()() const { return handle_; }
 };
 
 } // namespace
