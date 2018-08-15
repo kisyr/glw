@@ -2,7 +2,7 @@
 #define __GLW_TEST_HPP
 
 #include <GL/glew.h>
-#include <GL/glfw.h>
+#include <GLFW/glfw3.h>
 
 #include <iostream>
 #include <cstdlib>
@@ -15,8 +15,10 @@
 
 void test_init()
 {
+    GLFWwindow* window;
     if(!glfwInit()) exit(EXIT_FAILURE);
-    if(!glfwOpenWindow(640,480,0,0,0,0,0,0,GLFW_WINDOW)) exit(EXIT_FAILURE);
+    if(!(window = glfwCreateWindow(640, 480, "test", NULL, NULL))) exit(EXIT_FAILURE);
+    glfwMakeContextCurrent(window);
     if(glewInit() != GLEW_OK) exit(EXIT_FAILURE);
 }
 

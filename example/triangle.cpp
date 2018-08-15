@@ -1,5 +1,5 @@
 #include <GL/glew.h>
-#include <GL/glfw.h>
+#include <GLFW/glfw3.h>
 #include <iostream>
 
 #define __GLW_ENABLE_EXCEPTIONS
@@ -26,8 +26,11 @@ static const char* fsource =
 
 int main()
 {
+    GLFWwindow* window;
+
     glfwInit();
-    glfwOpenWindow(500,500, 0,0,0,0,0,0, GLFW_WINDOW);
+    window = glfwCreateWindow(500, 500, "Example", NULL, NULL);
+    glfwMakeContextCurrent(window);
     glewInit();
     
     try {
@@ -52,11 +55,12 @@ int main()
         program.setAttribute("v_color", c_buffer());
 
         // Rendering
-        while(glfwGetWindowParam(GLFW_OPENED) && !glfwGetKey(GLFW_KEY_ESC)) {
+        while(!glfwWindowShouldClose(window) && !glfwGetKey(window, GLFW_KEY_ESCAPE)) {
             glClear(GL_COLOR_BUFFER_BIT);
             program.setUniform<float>("u_time", glfwGetTime());
             program.execute(GL_TRIANGLES, 0, 3);
-            glfwSwapBuffers();
+            glfwSwapBuffers(window);
+            glfwPollEvents();
         }
     } catch(const glw::Error& e) {
         std::cerr 

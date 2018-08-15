@@ -1,5 +1,5 @@
 #include <GL/glew.h>
-#include <GL/glfw.h>
+#include <GLFW/glfw3.h>
 #include <iostream>
 #include <fstream>
 #include <glm/gtc/matrix_transform.hpp>
@@ -87,8 +87,11 @@ const GLubyte texels[] = {
 
 int main()
 {
+    GLFWwindow* window;
+
     glfwInit();
-    glfwOpenWindow(500,500,0,0,0,0,0,0,GLFW_WINDOW);
+    window = glfwCreateWindow(500, 500, "Example", NULL, NULL);
+    glfwMakeContextCurrent(window);
     glewInit();
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_TEXTURE_2D);
@@ -115,14 +118,14 @@ int main()
         glw::Texture2D texture(GL_RGB, format, 8,8, texels);
         
         // Rendering.
-        while(glfwGetWindowParam(GLFW_OPENED) && !glfwGetKey(GLFW_KEY_ESC)) {
+        while(!glfwWindowShouldClose(window) && !glfwGetKey(window, GLFW_KEY_ESCAPE)) {
             float time = glfwGetTime();
         
             glm::mat4 proj = glm::perspective(50.0f, 1.0f, 1.0f, 100.0f);
             glm::mat4 view = glm::lookAt(
-                glm::vec3(sin(time)*5, 5.0f, cos(time)*5),
+                glm::vec3(sin(time), 1.0f, cos(time)) * glm::vec3(10.0f),
                 glm::vec3(0.0f),
-                glm::vec3(0.0f,1.0f,0.0f));
+                glm::vec3(0.0f, 1.0f, 0.0f));
             glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f));
 
             glClearColor(.75f, .75f, .75f, 1.f);
@@ -137,7 +140,8 @@ int main()
             program.setAttribute("v_texcoord", v_buffer(), 20, 12);
             program.execute(GL_TRIANGLES, elements, GL_UNSIGNED_INT, i_buffer());
 
-            glfwSwapBuffers();
+            glfwSwapBuffers(window);
+            glfwPollEvents();
         }
     } catch(const glw::Error& e) {
         std::cerr
