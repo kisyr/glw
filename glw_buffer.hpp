@@ -46,7 +46,7 @@ public:
         }
         return GL_NO_ERROR;
     }
-#ifndef __GLW_ES2
+
     GLuint read(const GLint offset__, const size_t size__, void* data__)
     {
         void* mem;
@@ -60,7 +60,7 @@ public:
         __GLW_HANDLE(glUnmapBuffer(GL_ARRAY_BUFFER)) {}
         return GL_NO_ERROR;
     }
-#endif
+
     template <GLenum Name>
     GLint getInfo()
     {

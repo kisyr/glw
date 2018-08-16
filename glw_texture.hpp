@@ -71,15 +71,9 @@ public:
         __GLW_HANDLE(glBindTexture(target_, *this)) {
             return handle_error(__GLW_LAST_ERROR, "glBindTexture");
         }
-#ifndef __GLW_ES2
         __GLW_HANDLE(glGetTexLevelParameteriv(target_, lod__, Name, &result)) {
             return handle_error(__GLW_LAST_ERROR, "glGetTexLevelParameteriv");
         }
-#else
-        __GLW_HANDLE(glGetTexParameteriv(target_, Name, &result)) {
-            return handle_error(__GLW_LAST_ERROR, "glGetTexParameteriv");
-        }
-#endif
         return result;
     }
 
@@ -145,7 +139,7 @@ public:
         }
         return GL_NO_ERROR;
     }
-#ifndef __GLW_ES2
+
     GLuint read(
         const GLint lod__,
         const ImageFormat& format__,
@@ -163,7 +157,6 @@ public:
         }
         return GL_NO_ERROR;
     }
-#endif
 };
 
 } // namespace glw
