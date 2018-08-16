@@ -44,13 +44,13 @@ class Error : public std::exception
 {
 public:
     Error() {}
-    
+
     Error(const std::string& what__, GLuint error__)
       : what_(what__),
         error_(error__) {}
-      
+
     ~Error() throw() {}
-    
+
     const GLchar* what() const throw() { return what_.c_str(); }
     GLuint error() const throw() { return error_; }
 
@@ -83,7 +83,6 @@ static inline const GLchar* error_string(const GLuint code)
     default:                    return "Unknown error";
     }
 }
-
 
 static inline size_t sizeof_type(const GLenum type)
 {

@@ -13,7 +13,7 @@ class Sampler : public Wrapper<SamplerReference>
 {
 public:
     Sampler() {}
-    
+
     Sampler(
         const GLenum min_filter__,
         const GLenum mag_filter__,
@@ -21,7 +21,7 @@ public:
         GLuint* error = NULL)
     {
         create();
-    
+
         __GLW_HANDLE(glSamplerParameteri(*this, GL_TEXTURE_MIN_FILTER, min_filter__)) {
             if(error) *error = handleError(__GLW_LAST_ERROR, "glSamplerParameteri");
         }

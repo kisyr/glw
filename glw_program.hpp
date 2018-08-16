@@ -276,9 +276,9 @@ public:
         const GLint offset__, 
         const GLint elements__)
     {
-            __GLW_HANDLE(glUseProgram(*this)) {
-                return handle_error(__GLW_LAST_ERROR, "glUseProgram");
-            }
+        __GLW_HANDLE(glUseProgram(*this)) {
+            return handle_error(__GLW_LAST_ERROR, "glUseProgram");
+        }
         if(prepare() != GL_NO_ERROR) {
             return handle_error(__GLW_LAST_ERROR, "Program::execute");
         }
@@ -294,9 +294,9 @@ public:
         const GLenum element_type__,
         const GLuint element_buffer__)
     {
-            __GLW_HANDLE(glUseProgram(*this)) {
-                return handle_error(__GLW_LAST_ERROR, "glUseProgram");
-            }
+        __GLW_HANDLE(glUseProgram(*this)) {
+            return handle_error(__GLW_LAST_ERROR, "glUseProgram");
+        }
         if(prepare() != GL_NO_ERROR) {
             return handle_error(__GLW_LAST_ERROR, "Program::execute");
         }
@@ -324,7 +324,7 @@ public:
         }
         return result;
     }
-    
+
     GLuint setAttribute(
         const GLchar* name__,
         const GLuint buffer__,
@@ -407,7 +407,7 @@ public:
         }
         return result;
     }
-    
+
     const Attributes& attributes() const { return attributes_; }
     const Uniforms& uniforms() const { return uniforms_; }
 };

@@ -33,7 +33,7 @@ protected:
         size_y_(size_y__),
         size_z_(size_z__)
     {
-    
+
         __GLW_HANDLE(glGenTextures(1, &handle_)) {}
         __GLW_HANDLE(glBindTexture(target_, *this)) {
             if(error) *error = handle_error(__GLW_LAST_ERROR, "glBindTexture");
@@ -62,7 +62,7 @@ protected:
     {
         if(handle_) glDeleteTextures(1, &handle_);
     }
-    
+
 public:
     GLuint bind()
     {
@@ -119,7 +119,7 @@ public:
             if(error) *error = handle_error(__GLW_LAST_ERROR, "glTexImage2D");
         }
     }
-    
+
     GLuint write(
         const GLint lod__,
         const ImageFormat& format__,

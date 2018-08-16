@@ -23,7 +23,7 @@ public:
         usage_(usage__),
         size_(size__)
     {
-        __GLW_HANDLE(glGenBuffers(1, &handle_)) {}        
+        __GLW_HANDLE(glGenBuffers(1, &handle_)) {}
         __GLW_HANDLE(glBindBuffer(target_, *this)) {
             if(error__) *error__ = handle_error(__GLW_LAST_ERROR, "glBindBuffer");
             return;
