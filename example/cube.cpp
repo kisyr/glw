@@ -110,8 +110,8 @@ int main()
         }
         
         // Data buffers.
-        glw::Buffer v_buffer(GL_STATIC_DRAW, sizeof(vertices), vertices);
-        glw::Buffer i_buffer(GL_STATIC_DRAW, sizeof(indices), indices);
+        glw::Buffer v_buffer(GL_ARRAY_BUFFER, GL_STATIC_DRAW, sizeof(vertices), vertices);
+        glw::Buffer i_buffer(GL_ARRAY_BUFFER, GL_STATIC_DRAW, sizeof(indices), indices);
         
         // Textures.
         glw::ImageFormat format = { GL_UNSIGNED_BYTE, GL_RGB };
@@ -130,8 +130,6 @@ int main()
 
             glClearColor(.75f, .75f, .75f, 1.f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, texture());
         
             // Draw cube.
             program.setSampler("u_sampler", 0, texture());

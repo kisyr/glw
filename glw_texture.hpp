@@ -64,6 +64,13 @@ protected:
     }
     
 public:
+    GLuint bind()
+    {
+        __GLW_HANDLE(glBindTexture(target_, *this)) {
+            return handle_error(__GLW_LAST_ERROR, "glBindTexture");
+        }
+    }
+
     template <GLenum Name>
     GLint getInfo(const GLint lod__) 
     {
